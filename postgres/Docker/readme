@@ -1,0 +1,82 @@
+Para desplegar PostgreSQL 12 en Docker con SSL habilitado, necesitas seguir estos pasos:
+
+Generar los Certificados SSL: Necesitas un certificado de servidor y una clave privada.
+Configurar PostgreSQL para Usar SSL: Configura PostgreSQL para usar los certificados SSL.
+Crear un Dockerfile: Crea un Dockerfile para construir una imagen de PostgreSQL con SSL habilitado.
+Levantar el Contenedor de Docker: Usa Docker para levantar el contenedor con la configuración adecuada.
+Paso 1: Generar los Certificados SSL
+Puedes usar OpenSSL para generar los certificados necesarios.
+
+Generar la Clave Privada del Servidor
+openssl genrsa -out server.key 2048
+
+Generar el Certificado del Servidor
+chmod 600 server.key
+chmod 644 server.crt
+
+Ajustar los Permisos de los Certificados
+chmod 600 server.key
+chmod 644 server.crt
+
+Paso 2: Configurar PostgreSQL para Usar SSL
+Crea un archivo de configuración postgresql.conf y un archivo de control de acceso pg_hba.conf.
+
+postgresql.conf
+ssl = on
+ssl_cert_file = '/var/lib/postgresql/server.crt'
+ssl_key_file = '/var/lib/postgresql/server.key'
+
+pg_hba.conf
+Añade una línea para permitir conexiones SSL:
+hostssl all all 0.0.0.0/0 md5
+
+Paso 3: Crear un Dockerfile
+Crea un Dockerfile para construir una imagen de PostgreSQL con SSL habilitado.
+
+Dockerfile
+    FROM postgres:latest
+
+    # Copiar los certificados SSL
+    COPY server.crt /var/lib/postgresql/server.crt
+    COPY server.key /var/lib/postgresql/server.key
+
+    # Copiar los archivos de configuración
+    COPY postgresql.conf /etc/postgresql/postgresql.conf
+    COPY pg_hba.conf /etc/postgresql/pg_hba.conf
+
+    # Ajustar los permisos de los certificados
+    RUN chown postgres:postgres /var/lib/postgresql/server.key /var/lib/postgresql/server.crt \
+        && chmod 600 /var/lib/postgresql/server.key \
+        && chmod 644 /var/lib/postgresql/server.crt
+
+    # Establecer las variables de entorno para PostgreSQL
+    ENV POSTGRES_DB=mydb
+    ENV POSTGRES_USER=myuser
+    ENV POSTGRES_PASSWORD=mypassword
+
+    # Iniciar PostgreSQL con la configuración personalizada
+    CMD ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+
+Paso 4: Levantar el Contenedor de Docker
+Construye y levanta el contenedor de Docker con la configuración adecuada.
+
+Construir la Imagen de Docker
+podman build -t postgres-ssl .
+
+Levantar el Contenedor de Docker
+podman run -d --name postgres-ssl -p 5432:5432 -v /opt/postgres/data:/var/lib/postgresql/data:Z postgres-ssl
+
+Resumen
+Generar los Certificados SSL:
+
+Usa OpenSSL para generar la clave privada y el certificado del servidor.
+Configurar PostgreSQL para Usar SSL:
+
+Crea los archivos postgresql.conf y pg_hba.conf con la configuración adecuada.
+Crear un Dockerfile:
+
+Crea un Dockerfile para construir una imagen de PostgreSQL con SSL habilitado.
+Levantar el Contenedor de Docker:
+
+Construye y levanta el contenedor de Docker con la configuración adecuada.
+Con estos pasos, deberías poder levantar un contenedor de PostgreSQL 12 en Docker con SSL habilitado. Si tienes alguna otra pregunta o necesitas más ayuda, no dudes en preguntar. ¡Estoy aquí para ayudarte!
